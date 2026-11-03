@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QRESERVOIR — Quantum Reservoir Computing, as a Platform</title>
+<meta name="description" content="QRC APIs, simulation tooling, and quantum tensor engines. The reservoir does the learning — you only train the readout.">
+<style>
+  :root{
+    --bg:#07090d; --panel:#0d1117; --panel2:#11161f; --line:#1e2836;
+    --ink:#e8edf3; --dim:#93a1b3; --faint:#5c6b7e;
+    --cyan:#5eead4; --violet:#a78bfa; --amber:#fbbf24;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.6}
+  a{color:var(--cyan);text-decoration:none}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+  header{position:sticky;top:0;z-index:10;background:rgba(7,9,13,.88);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  .nav{display:flex;align-items:center;justify-content:space-between;padding:16px 0}
+  .logo{font-weight:800;letter-spacing:.14em;font-size:15px}
+  .logo b{color:var(--cyan)}
+  .logo span{color:var(--faint);font-weight:500;letter-spacing:.05em}
+  .nav a.n{color:var(--dim);font-size:14px;margin-left:22px}
+  .nav a.n:hover{color:var(--ink)}
+  .btn{display:inline-block;background:var(--cyan);color:#06251f;font-weight:700;padding:12px 22px;border-radius:10px;border:0;cursor:pointer}
+  .btn:hover{filter:brightness(1.08)}
+  .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+  .hero{padding:84px 0 56px}
+  .kicker{color:var(--cyan);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;letter-spacing:.12em;text-transform:uppercase}
+  h1{font-size:clamp(40px,6vw,68px);line-height:1.04;margin:18px 0 20px;letter-spacing:-.02em}
+  h1 em{font-style:normal;color:var(--cyan)}
+  .lede{font-size:19px;color:var(--dim);max-width:760px}
+  .lede strong{color:var(--ink)}
+  .cta{margin-top:30px;display:flex;gap:12px;flex-wrap:wrap}
+  .note{color:var(--faint);font-size:13px;margin-top:14px}
+  /* mechanism diagram */
+  .mech{margin:56px 0;display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:0;align-items:stretch}
+  .stage{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px}
+  .stage h3{margin:0 0 6px;font-size:16px}
+  .stage p{margin:0;color:var(--dim);font-size:14px}
+  .stage .tag{display:inline-block;margin-top:12px;font-family:ui-monospace,Menlo,monospace;font-size:12px;padding:4px 9px;border-radius:999px;border:1px solid var(--line)}
+  .stage.fixed .tag{color:var(--violet);border-color:#3b2f66}
+  .stage.trained .tag{color:var(--amber);border-color:#5a4210}
+  .arrow{display:flex;align-items:center;padding:0 10px;color:var(--faint);font-size:22px}
+  .eq{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 24px;margin:-20px 0 56px;font-family:ui-monospace,Menlo,monospace;font-size:15px;color:var(--dim)}
+  .eq b{color:var(--ink)}
+  .eq .hl{color:var(--cyan)}
+  section{padding:44px 0}
+  h2{font-size:30px;letter-spacing:-.01em;margin:0 0 10px}
+  .sub{color:var(--dim);max-width:760px;margin:0 0 28px}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px}
+  .card h3{margin:0 0 8px;font-size:18px}
+  .card p{margin:0;color:var(--dim);font-size:15px}
+  .card .num{font-family:ui-monospace,Menlo,monospace;color:var(--cyan);font-size:13px}
+  .apps{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+  .app{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px}
+  .app h3{margin:0 0 6px;font-size:17px}
+  .app p{margin:0;color:var(--dim);font-size:15px}
+  /* live demo */
+  .demo{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:24px}
+  .demo canvas{width:100%;height:280px;display:block;background:#080b10;border:1px solid var(--line);border-radius:10px}
+  .demo .controls{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0 6px}
+  .demo .controls button{background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:8px 16px;cursor:pointer;font-size:14px}
+  .demo .controls button.on{background:var(--cyan);color:#06251f;border-color:var(--cyan);font-weight:700}
+  .demo p{color:var(--dim);font-size:14px;margin:8px 0 0}
+  .demo p b{color:var(--ink)}
+  pre{background:#080b10;border:1px solid var(--line);border-radius:12px;padding:20px;overflow:auto;font-size:14px;line-height:1.55;color:#c9d4e3}
+  pre .c{color:#5c6b7e} pre .k{color:#a78bfa} pre .s{color:#5eead4}
+  form{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:28px;display:grid;gap:14px;max-width:640px}
+  label{font-size:14px;color:var(--dim)}
+  input,select,textarea{width:100%;margin-top:6px;background:#080b10;border:1px solid var(--line);border-radius:10px;color:var(--ink);padding:12px 14px;font-size:15px;font-family:inherit}
+  footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--faint);font-size:13px}
+  @media(max-width:760px){
+    .mech{grid-template-columns:1fr}.arrow{justify-content:center;padding:10px 0;transform:rotate(90deg)}
+    .grid,.apps{grid-template-columns:1fr}
+    .nav a.n{display:none}
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap nav">
+    <div class="logo"><b>Q</b>RESERVOIR <span>/ quantum reservoir computing</span></div>
+    <div>
+      <a class="n" href="#architecture">Architecture</a>
+      <a class="n" href="#platform">Platform</a>
+      <a class="n" href="#applications">Applications</a>
+      <a class="n" href="#access">Request access</a>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="hero">
+    <div class="kicker">QRC APIs · Simulation tooling · Quantum tensor engines</div>
+    <h1>The reservoir does<br>the learning. <em>You train<br>one layer.</em></h1>
+    <p class="lede">Reservoir computing is emerging as an ultra-efficient architecture for physical quantum systems. Feed a signal into a fixed quantum system, let its <strong>non-linear dynamics</strong> do the work, and train only a simple linear readout. No backpropagation through quantum circuits. No training the internal recurrent layers. That is the whole trick — and it runs on today's hardware.</p>
+    <div class="cta">
+      <a class="btn" href="#access">Request access</a>
+      <a class="btn ghost" href="#live">See a reservoir work ↓</a>
+    </div>
+    <p class="note">Built for researchers, quantum teams, and time-series people who want quantum advantage without a quantum training bill.</p>
+  </div>
+
+  <div class="mech" id="architecture">
+    <div class="stage">
+      <h3>1 · Input</h3>
+      <p>Your time series, signal, or quantum state — encoded into the reservoir's drives and couplings.</p>
+      <span class="tag">u(t) →</span>
+    </div>
+    <div class="arrow">→</div>
+    <div class="stage fixed">
+      <h3>2 · Quantum reservoir</h3>
+      <p>A fixed physical system — qubits, oscillators, photonic modes — whose intrinsic dynamics expand the input into a rich, high-dimensional state.</p>
+      <span class="tag">NEVER TRAINED</span>
+    </div>
+    <div class="arrow">→</div>
+    <div class="stage trained">
+      <h3>3 · Linear readout</h3>
+      <p>One trainable layer. Ridge regression over reservoir states. Fast, convex, and stable.</p>
+      <span class="tag">THE ONLY TRAINED LAYER</span>
+    </div>
+  </div>
+  <div class="eq">x(t+1) = <b>tanh</b>( W<sub>in</sub>·u(t+1) + W·x(t) ) &nbsp;&nbsp;·&nbsp;&nbsp; y(t) = <span class="hl">W<sub>out</sub>·x(t)</span> &nbsp;&nbsp;<span style="color:var(--faint)">— W fixed forever; only W<sub>out</sub> is learned.</span></div>
+
+  <section id="live">
+    <h2>A reservoir, live in your browser</h2>
+    <p class="sub">A toy classical reservoir — 24 nodes, fixed random weights, exactly the architecture above. Pick an input. Watch the reservoir states (left) turn into a prediction (right, teal) of the signal one step ahead. Nothing inside is trained; only the readout weights are fit, in milliseconds.</p>
+    <div class="demo">
+      <canvas id="res" width="1000" height="280"></canvas>
+      <div class="controls">
+        <button data-sig="sine" class="on">Sine wave</button>
+        <button data-sig="chaos">Chaotic-ish signal</button>
+        <button data-sig="pulse">Pulse train</button>
+      </div>
+      <p><b>Left:</b> reservoir node states over time &nbsp;·&nbsp; <b>Right:</b> signal (grey) vs one-step-ahead readout prediction (teal) &nbsp;·&nbsp; The quantum version replaces these nodes with physical dynamics — same architecture, richer state space.</p>
+    </div>
+  </section>
+
+  <section id="platform">
+    <h2>One platform, three surfaces</h2>
+    <p class="sub">Whatever stage you're at — exploring the idea, benchmarking a device, or shipping a product — there's a surface for it.</p>
+    <div class="grid">
+      <div class="card">
+        <div class="num">01 / API</div>
+        <h3>QRC APIs</h3>
+        <p>POST a time series, get reservoir embeddings and predictions back. Managed reservoirs on simulated and hardware backends, with readout fitting included. No quantum expertise required to call it.</p>
+      </div>
+      <div class="card">
+        <div class="num">02 / SIMULATE</div>
+        <h3>Simulation tooling</h3>
+        <p>Build and benchmark reservoirs before you touch hardware: superconducting, photonic, Rydberg-atom, and neutral-atom models, with noise, finite sampling, and fading-memory diagnostics built in.</p>
+      </div>
+      <div class="card">
+        <div class="num">03 / ENGINE</div>
+        <h3>Quantum tensor engines</h3>
+        <p>Tensor-network backends that simulate large reservoirs classically — so you can prototype at scales no device can reach yet, then port the same reservoir definition to hardware.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Why reservoirs win right now</h2>
+    <div class="grid">
+      <div class="card">
+        <h3>No barren plateaus</h3>
+        <p>Variational quantum circuits die on flat loss landscapes. Reservoirs never optimize the quantum part at all — there is nothing to plateau.</p>
+      </div>
+      <div class="card">
+        <h3>Small-data strong</h3>
+        <p>When samples are scarce — early trials, rare events, expensive measurements — QRC embeddings have beaten raw features and classical embeddings, with lower variance.</p>
+      </div>
+      <div class="card">
+        <h3>NISQ-native</h3>
+        <p>Reservoir schemes are designed for noisy, intermediate-scale devices: tens of sites, shallow circuits, measurements as the interface. The hardware of today, not of 2035.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="applications">
+    <h2>Where it applies</h2>
+    <div class="apps">
+      <div class="app"><h3>Forecasting chaotic dynamics</h3><p>The benchmark task for reservoirs: predict systems that defeat ordinary models, from weather-like signals to driven quantum systems.</p></div>
+      <div class="app"><h3>Molecular &amp; materials prediction</h3><p>Small-data property prediction — the QuEra / Merck / Amgen / Deloitte case study used QRC exactly here.</p></div>
+      <div class="app"><h3>Quantum dynamics &amp; state tasks</h3><p>Recognizing entanglement, tracking quantum states, and classifying phases — inputs the reservoir can take natively.</p></div>
+      <div class="app"><h3>Signal processing &amp; sensing</h3><p>Waveform classification, time-dependent signal processing, and sensor streams where memory of the past is the feature.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>It looks like this</h2>
+<pre><span class="c"># QRC API — forecast one step ahead</span>
+<span class="k">import</span> qreservoir
+
+res = qreservoir.<span class="s">Reservoir</span>(backend=<span class="s">"neutral-atom-sim"</span>, nodes=64)
+res.<span class="s">fit</span>(train_series)          <span class="c"># fits only the readout</span>
+forecast = res.<span class="s">predict</span>(live_series, horizon=12)
+</pre>
+  </section>
+
+  <section id="access">
+    <h2>Request access</h2>
+    <p class="sub">Early access for research groups, quantum teams, and time-series builders. Tell us what you'd run through a reservoir.</p>
+    <form action="https://formsubmit.co/whish39238@mypacks.net" method="POST">
+      <input type="hidden" name="_subject" value="QRESERVOIR access request">
+      <input type="hidden" name="_captcha" value="false">
+      <div><label>Name<input name="name" required placeholder="Ada Lovelace"></label></div>
+      <div><label>Email<input name="email" type="email" required placeholder="ada@lab.org"></label></div>
+      <div><label>What would you run through a reservoir?
+        <select name="use_case">
+          <option>Time-series forecasting</option>
+          <option>Quantum dynamics / state tasks</option>
+          <option>Molecular or materials prediction</option>
+          <option>Signal processing / sensing</option>
+          <option>Something else</option>
+        </select></label></div>
+      <div><label>Anything else?<textarea name="notes" rows="3" placeholder="Hardware you use, data you have, scale you need…"></textarea></label></div>
+      <button class="btn" type="submit">Request access →</button>
+    </form>
+    <p class="note">Concept page for qreservoir.com. The access form routes via a relay and needs its one-time inbox confirmation plus a live test once the page is hosted before it can be called working.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">QRESERVOIR — quantum reservoir computing, as a platform. Concept page; the domain is not yet registered. Architecture: fixed quantum dynamics + trained linear readout.</div>
+</footer>
+
+<script>
+(function(){
+  var cv = document.getElementById('res');
+  if(!cv) return;
+  var ctx = cv.getContext('2d');
+  var N = 24, W = 1000, H = 280;
+  // fixed random reservoir weights (never trained)
+  var Win = [], Wres = [];
+  for(var i=0;i<N;i++){ Win.push((Math.random()*2-1)*0.9); Wres.push([]); for(var j=0;j<N;j++) Wres[i].push((Math.random()*2-1)*0.55); }
+  var x = new Array(N).fill(0), hist = [], sigHist = [], predHist = [], t = 0, sig = 'sine';
+  var Wout = null;
+  function signal(tt){
+    if(sig==='sine') return Math.sin(tt*0.09);
+    if(sig==='pulse') return (Math.sin(tt*0.09)>0.6)?1:-0.4;
+    return Math.sin(tt*0.11) + 0.5*Math.sin(tt*0.031+1.7) + 0.3*Math.sin(tt*0.53);
+  }
+  function ridgeFit(X, y){
+    // tiny ridge regression over reservoir states -> one-step-ahead target
+    var d = N, lam = 1e-3, A = [], b = new Array(d).fill(0);
+    for(var i=0;i<d;i++){ A.push(new Array(d).fill(0)); }
+    for(var k=0;k<X.length;k++){ for(var i=0;i<d;i++){ b[i]+=X[k][i]*y[k]; for(var j=0;j<d;j++) A[i][j]+=X[k][i]*X[k][j]; } }
+    for(var i=0;i<d;i++) A[i][i]+=lam;
+    // gaussian elimination
+    for(var i=0;i<d;i++){ var p=A[i][i]; for(var j=0;j<d;j++) A[i][j]/=p; b[i]/=p;
+      for(var k=0;k<d;k++){ if(k!==i){ var f=A[k][i]; for(var j=0;j<d;j++) A[k][j]-=f*A[i][j]; b[k]-=f*b[i]; } } }
+    return b;
+  }
+  function step(){
+    t++;
+    var u = signal(t);
+    var nx = [];
+    for(var i=0;i<N;i++){ var s = Win[i]*u; for(var j=0;j<N;j++) s += Wres[i][j]*x[j]; nx.push(Math.tanh(s)); }
+    x = nx;
+    sigHist.push(u); hist.push(x.slice());
+    if(hist.length>240){ hist.shift(); sigHist.shift(); }
+    if(hist.length>=160 && !Wout){
+      var X = hist.slice(0, hist.length-1), y = sigHist.slice(1);
+      Wout = ridgeFit(X, y);
+    }
+    var pred = 0;
+    if(Wout){ for(var i=0;i<N;i++) pred += Wout[i]*x[i]; }
+    predHist.push(pred);
+    if(predHist.length>240) predHist.shift();
+    draw();
+  }
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle='#080b10'; ctx.fillRect(0,0,W,H);
+    ctx.strokeStyle='#1e2836'; ctx.beginPath(); ctx.moveTo(500,0); ctx.lineTo(500,H); ctx.stroke();
+    ctx.fillStyle='#5c6b7e'; ctx.font='12px Menlo,monospace';
+    ctx.fillText('RESERVOIR STATES', 12, 20); ctx.fillText('SIGNAL vs READOUT PREDICTION', 512, 20);
+    var n = hist.length;
+    for(var k=0;k<n;k++){
+      var px = 10 + (k/(240))*470;
+      for(var i=0;i<N;i++){
+        var v = hist[k][i];
+        ctx.fillStyle = v>0 ? 'rgba(167,139,250,'+Math.min(0.9,Math.abs(v)+0.08)+')' : 'rgba(94,234,212,'+Math.min(0.9,Math.abs(v)+0.08)+')';
+        ctx.fillRect(px, 30 + i*9, 2, 6);
+      }
+    }
+    function trace(arr, color, width){
+      ctx.strokeStyle=color; ctx.lineWidth=width; ctx.beginPath();
+      for(var k=0;k<arr.length;k++){ var px=510+(k/240)*470; var py=160-arr[k]*90; if(k===0) ctx.moveTo(px,py); else ctx.lineTo(px,py); }
+      ctx.stroke(); ctx.lineWidth=1;
+    }
+    trace(sigHist, '#5c6b7e', 1.5);
+    trace(predHist, '#5eead4', 2);
+  }
+  document.querySelectorAll('.demo .controls button').forEach(function(b){
+    b.addEventListener('click', function(){
+      document.querySelectorAll('.demo .controls button').forEach(function(o){o.classList.remove('on');});
+      b.classList.add('on'); sig=b.dataset.sig; Wout=null; hist=[]; sigHist=[]; predHist=[];
+    });
+  });
+  setInterval(step, 90);
+})();
+</script>
+</body>
+</html>
