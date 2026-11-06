@@ -1,0 +1,1068 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>The Quantum Bell</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bg: #f3efe6;
+        --panel: #fbf8f1;
+        --panel-2: #efe9db;
+        --ink: #211c14;
+        --ink-soft: #5c5546;
+        --line: #d8d0bd;
+        --copper: #a85f1d;
+        --copper-bright: #c97a26;
+        --copper-deep: #7e4511;
+        --steel: #4d6472;
+        --good: #3d7a3a;
+        --bad: #b03a2e;
+        --chip: #e9e1cd;
+        --shadow: 0 1px 2px rgba(60, 45, 20, .08), 0 8px 24px rgba(60, 45, 20, .07);
+        color-scheme: light;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #14110c;
+          --panel: #1e1a13;
+          --panel-2: #26211a;
+          --ink: #ece4d2;
+          --ink-soft: #a89c85;
+          --line: #3a332a;
+          --copper: #e09a4a;
+          --copper-bright: #eda855;
+          --copper-deep: #eda855;
+          --steel: #8fa9b8;
+          --good: #7fb873;
+          --bad: #e0785f;
+          --chip: #2c2618;
+          --shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 28px rgba(0,0,0,.35);
+          color-scheme: dark;
+        }
+      }
+      * { box-sizing: border-box; }
+      html { -webkit-text-size-adjust: 100%; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: "Spectral", Georgia, "Times New Roman", serif;
+        font-size: 17px;
+        line-height: 1.55;
+      }
+      .mono { font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace; }
+      main { max-width: 1180px; margin: 0 auto; padding: 28px 20px 56px; }
+
+      /* ---------- header ---------- */
+      header.hero { max-width: 820px; margin: 10px 0 26px; }
+      header.hero h1 {
+        font-size: clamp(2.4rem, 6vw, 3.9rem);
+        line-height: 1.04; font-weight: 700; letter-spacing: -0.01em;
+        margin: 0 0 14px;
+      }
+      header.hero h1 em { font-style: italic; color: var(--copper-deep); }
+      header.hero p.lede { font-size: 1.13rem; color: var(--ink-soft); margin: 0 0 18px; max-width: 68ch; }
+      .map-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+      .map-chips span {
+        font-family: "IBM Plex Mono", monospace; font-size: .78rem;
+        background: var(--chip); border: 1px solid var(--line);
+        padding: 5px 10px; border-radius: 999px; color: var(--ink);
+      }
+      .map-chips b { color: var(--copper-deep); font-weight: 600; }
+
+      /* ---------- stage layout ---------- */
+      .stage {
+        display: grid; gap: 18px;
+        grid-template-columns: 1fr;
+      }
+      @media (min-width: 960px) {
+        .stage { grid-template-columns: minmax(0, 1.55fr) minmax(300px, 1fr); }
+      }
+      .card {
+        background: var(--panel); border: 1px solid var(--line);
+        border-radius: 12px; box-shadow: var(--shadow);
+        padding: 18px;
+      }
+      .card h2 {
+        font-size: 1.02rem; font-weight: 600; margin: 0 0 4px;
+        font-family: "IBM Plex Mono", monospace; letter-spacing: .04em; text-transform: uppercase;
+        color: var(--ink-soft); font-size: .8rem;
+      }
+      .card h2 .accent { color: var(--copper-deep); }
+      .card p.note { margin: 4px 0 0; font-size: .92rem; color: var(--ink-soft); }
+
+      .viz-row { display: grid; grid-template-columns: 1fr; gap: 16px; align-items: start; }
+      @media (min-width: 620px) { .viz-row { grid-template-columns: 240px 1fr; } }
+
+      /* bell */
+      .bell-wrap { text-align: center; }
+      .bell-stage { position: relative; width: 220px; height: 240px; margin: 0 auto; }
+      .bell-stage svg { position: relative; z-index: 2; overflow: visible; }
+      #bellSwing { transform-origin: 110px 26px; }
+      .ripple {
+        position: absolute; left: 50%; top: 118px; z-index: 1;
+        border: 2px solid var(--copper); border-radius: 50%;
+        transform: translate(-50%, -50%);
+        pointer-events: none; opacity: 0;
+      }
+      @keyframes rippleOut {
+        0% { width: 60px; height: 60px; opacity: .55; }
+        100% { width: 250px; height: 250px; opacity: 0; }
+      }
+      .ripple.go { animation: rippleOut 1.6s ease-out forwards; }
+      .bell-caption { font-size: .85rem; color: var(--ink-soft); margin-top: 2px; }
+      .bell-readouts { display: flex; justify-content: center; gap: 18px; margin-top: 8px; flex-wrap: wrap; }
+      .bell-readouts div { text-align: center; }
+      .bell-readouts .v { font-family: "IBM Plex Mono", monospace; font-size: 1.05rem; font-weight: 600; }
+      .bell-readouts .k { font-size: .72rem; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .06em; }
+
+      /* phase space */
+      .phase-wrap { position: relative; }
+      #phaseCanvas {
+        width: 100%; aspect-ratio: 1 / 1; max-height: 340px;
+        border: 1px solid var(--line); border-radius: 8px; display: block;
+        background: var(--panel-2);
+      }
+      .axis-label { position: absolute; font-family: "IBM Plex Mono", monospace; font-size: .7rem; color: var(--ink-soft); pointer-events: none; }
+      .axis-x { right: 8px; bottom: 6px; }
+      .axis-y { left: 8px; top: 6px; }
+
+      /* trace */
+      .trace-block { margin-top: 16px; }
+      #traceCanvas { width: 100%; height: 110px; display: block; }
+      .legend { display: flex; gap: 16px; font-family: "IBM Plex Mono", monospace; font-size: .72rem; color: var(--ink-soft); margin-top: 4px; flex-wrap: wrap; }
+      .legend i { display: inline-block; width: 18px; height: 0; border-top: 3px solid var(--copper); vertical-align: middle; margin-right: 5px; }
+      .legend i.drive { border-top: 2px dashed var(--steel); }
+
+      /* controls */
+      .controls .row { margin-bottom: 16px; }
+      .controls label.lab {
+        display: flex; justify-content: space-between; align-items: baseline;
+        font-family: "IBM Plex Mono", monospace; font-size: .78rem;
+        text-transform: uppercase; letter-spacing: .05em; color: var(--ink-soft);
+        margin-bottom: 6px;
+      }
+      .controls label.lab output { color: var(--ink); font-weight: 600; text-transform: none; letter-spacing: 0; }
+      input[type="range"] { width: 100%; accent-color: var(--copper); height: 28px; }
+      .btn-row { display: flex; flex-wrap: wrap; gap: 8px; }
+      button {
+        font-family: inherit; cursor: pointer; border-radius: 8px;
+        border: 1px solid var(--line); background: var(--panel-2); color: var(--ink);
+        padding: 9px 14px; font-size: .95rem; font-weight: 600;
+      }
+      button:hover { border-color: var(--copper); }
+      button:focus-visible, input:focus-visible { outline: 2px solid var(--copper); outline-offset: 2px; }
+      button.primary {
+        background: var(--copper); border-color: var(--copper-deep); color: #fff8ec;
+        font-size: 1.02rem; padding: 11px 18px; flex: 1 1 auto;
+      }
+      @media (prefers-color-scheme: dark) { button.primary { color: #1d1408; } }
+      button.primary:hover { background: var(--copper-bright); }
+      button.toggle[aria-pressed="true"] { background: var(--copper); color: #fff8ec; border-color: var(--copper-deep); }
+      @media (prefers-color-scheme: dark) { button.toggle[aria-pressed="true"] { color: #1d1408; } }
+      .hint { font-size: .85rem; color: var(--ink-soft); margin-top: 6px; }
+
+      /* fock ladder */
+      .ladder-list { margin-top: 10px; display: grid; gap: 5px; }
+      .frow { display: grid; grid-template-columns: 44px 1fr 52px; align-items: center; gap: 8px; }
+      .frow .flab { font-family: "IBM Plex Mono", monospace; font-size: .8rem; color: var(--ink-soft); text-align: right; }
+      .frow .ftrack { height: 15px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+      .frow .fbar { height: 100%; width: 0%; background: linear-gradient(90deg, var(--copper-deep), var(--copper-bright)); transition: width .12s linear; }
+      .frow .fval { font-family: "IBM Plex Mono", monospace; font-size: .78rem; }
+      .frow.peak .flab { color: var(--copper-deep); font-weight: 600; }
+
+      /* ---------- readout lab ---------- */
+      section.lab { margin-top: 22px; }
+      .lab-grid { display: grid; gap: 18px; grid-template-columns: 1fr; margin-top: 14px; }
+      @media (min-width: 960px) { .lab-grid { grid-template-columns: 1fr 1fr; } }
+      .big-stat { font-family: "IBM Plex Mono", monospace; font-size: 1.6rem; font-weight: 600; }
+      .stat-pair { display: flex; gap: 26px; flex-wrap: wrap; margin: 12px 0; }
+      .stat-pair .k { font-size: .74rem; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-soft); font-family: "IBM Plex Mono", monospace; }
+      #weightsCanvas { width: 100%; height: 150px; display: block; margin-top: 8px; }
+      .seq-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; margin-top: 12px; }
+      .seq-chip {
+        border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px;
+        font-family: "IBM Plex Mono", monospace; font-size: .8rem; background: var(--panel-2);
+      }
+      .seq-chip .bits { font-size: 1rem; font-weight: 600; letter-spacing: .18em; }
+      .seq-chip.ok { border-color: var(--good); }
+      .seq-chip.miss { border-color: var(--bad); }
+      .seq-chip .verdict-ok { color: var(--good); font-weight: 600; }
+      .seq-chip .verdict-miss { color: var(--bad); font-weight: 600; }
+      .bit-toggles { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+      .bit-btn {
+        width: 52px; height: 52px; font-size: 1.3rem; font-family: "IBM Plex Mono", monospace;
+        border-radius: 8px;
+      }
+      .bit-btn.on { background: var(--copper); color: #fff8ec; border-color: var(--copper-deep); }
+      @media (prefers-color-scheme: dark) { .bit-btn.on { color: #1d1408; } }
+      .slot-labels { display: flex; gap: 8px; font-family: "IBM Plex Mono", monospace; font-size: .68rem; color: var(--ink-soft); }
+      .slot-labels span { width: 52px; text-align: center; }
+      #testResult { margin-top: 14px; font-size: 1.02rem; min-height: 1.6em; }
+      #testResult .pred { font-family: "IBM Plex Mono", monospace; font-weight: 600; }
+
+      /* ---------- mapping ---------- */
+      section.mapping { margin-top: 26px; }
+      section.mapping > h2, section.lab > h2, section.model > h2 {
+        font-size: 1.7rem; font-weight: 700; margin: 0 0 6px; letter-spacing: -0.01em;
+      }
+      .section-sub { color: var(--ink-soft); max-width: 72ch; margin: 0 0 16px; }
+      .map-table { display: grid; gap: 0; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--panel); box-shadow: var(--shadow); }
+      .map-row { display: grid; grid-template-columns: 1fr; }
+      @media (min-width: 760px) { .map-row { grid-template-columns: 300px 1fr; } }
+      .map-row + .map-row { border-top: 1px solid var(--line); }
+      .map-term { padding: 16px 18px; background: var(--panel-2); }
+      .map-term .bell-side { font-weight: 700; font-size: 1.05rem; display: block; }
+      .map-term .phys-side { font-family: "IBM Plex Mono", monospace; font-size: .82rem; color: var(--copper-deep); display: block; margin-top: 3px; }
+      .map-def { padding: 16px 18px; }
+      .map-def p { margin: 0; }
+      .map-def p + p { margin-top: 8px; }
+      .map-def .formula { font-family: "IBM Plex Mono", monospace; font-size: .85rem; color: var(--ink-soft); }
+
+      section.model { margin-top: 26px; }
+      .model .card p { margin: 0 0 10px; }
+      .model .card p:last-child { margin-bottom: 0; }
+      footer { margin-top: 34px; border-top: 1px solid var(--line); padding-top: 16px; color: var(--ink-soft); font-size: .92rem; }
+      footer p { margin: 0 0 8px; max-width: 78ch; }
+
+      @media (prefers-reduced-motion: reduce) {
+        .ripple.go { animation: none; }
+        .frow .fbar { transition: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header class="hero">
+        <h1>The Quantum <em>Bell</em></h1>
+        <p class="lede">
+          A quantum reservoir computer is a bell you never teach to ring. Strike it with a strength that
+          encodes your data, listen to <em>how</em> it rings — the spectrum of photon-number probabilities —
+          and let a simple classical layer learn which ringing patterns mean what. The quantum part is never
+          trained; only the listener is. Everything below is live: the bell on this page is a real
+          (simplified) simulation of a driven, dissipative quantum resonator.
+        </p>
+        <div class="map-chips" aria-label="The analogy at a glance">
+          <span><b>bell</b> = resonator cavity</span>
+          <span><b>strike</b> = coherent drive</span>
+          <span><b>ringing</b> = Fock-state spectrum</span>
+          <span><b>listener</b> = linear readout</span>
+        </div>
+      </header>
+
+      <!-- ================= STAGE ================= -->
+      <div class="stage">
+        <section class="card" aria-label="The ringing bell">
+          <h2>The bell <span class="accent">— a bosonic mode, ringing</span></h2>
+          <div class="viz-row">
+            <div class="bell-wrap">
+              <div class="bell-stage" id="bellStage">
+                <svg width="220" height="240" viewBox="0 0 220 240" role="img" aria-label="A brass bell that swings as the resonator rings">
+                  <line x1="110" y1="4" x2="110" y2="26" stroke="var(--ink-soft)" stroke-width="3" />
+                  <g id="bellSwing">
+                    <circle cx="110" cy="34" r="7" fill="var(--copper-deep)" />
+                    <path id="bellBody" d="M110 38
+                      C 92 38 84 52 82 74
+                      C 80 98 76 118 66 140
+                      C 61 151 56 158 50 164
+                      L 170 164
+                      C 164 158 159 151 154 140
+                      C 144 118 140 98 138 74
+                      C 136 52 128 38 110 38 Z"
+                      fill="var(--copper)" stroke="var(--copper-deep)" stroke-width="2" />
+                    <path d="M88 60 C 84 84 82 108 76 132" fill="none" stroke="rgba(255,244,220,.55)" stroke-width="5" stroke-linecap="round" />
+                    <rect x="46" y="162" width="128" height="9" rx="4" fill="var(--copper-deep)" />
+                    <circle id="clapper" cx="110" cy="176" r="10" fill="var(--ink)" />
+                  </g>
+                </svg>
+              </div>
+              <div class="bell-caption">superconducting resonator, drawn as what it behaves like</div>
+              <div class="bell-readouts">
+                <div><div class="v mono" id="roMeanN">0.00</div><div class="k">mean photons ⟨n⟩</div></div>
+                <div><div class="v mono" id="roPeak">|0⟩</div><div class="k">loudest Fock state</div></div>
+                <div><div class="v mono" id="roAlpha">0.00</div><div class="k">field amplitude |α|</div></div>
+              </div>
+            </div>
+            <div class="phase-wrap">
+              <canvas id="phaseCanvas" width="480" height="480" aria-label="Husimi Q function of the resonator state in phase space"></canvas>
+              <span class="axis-label axis-x">Re α →</span>
+              <span class="axis-label axis-y">Im α ↑</span>
+              <p class="note">
+                The state's Husimi Q function in phase space, computed from the live wavefunction.
+                A fresh strike is a round droplet displaced from the origin; the Kerr nonlinearity
+                shears it into a crescent as it rings — that shear is part of what makes the ringing
+                a nonlinear function of the strike.
+              </p>
+            </div>
+          </div>
+          <div class="trace-block">
+            <canvas id="traceCanvas" width="900" height="220" aria-label="Trace of drive amplitude and mean photon number over time"></canvas>
+            <div class="legend">
+              <span><i></i>⟨n⟩(t) — how loud the ringing is</span>
+              <span><i class="drive"></i>drive ε(t) — the strikes</span>
+            </div>
+          </div>
+        </section>
+
+        <div style="display:grid; gap:18px; align-content:start;">
+          <section class="card controls" aria-label="Strike controls">
+            <h2>Strike it <span class="accent">— encode data as drive amplitude</span></h2>
+            <div class="row">
+              <label class="lab" for="uSlider">Input data value u <output id="uOut" class="mono">0.65</output></label>
+              <input type="range" id="uSlider" min="0" max="1" step="0.01" value="0.65" />
+              <div class="hint">u sets the coherent-drive amplitude: α ≈ 2.1·u. A stronger strike displaces the field further and excites a different overtone mix.</div>
+            </div>
+            <div class="row btn-row">
+              <button class="primary" id="strikeBtn" type="button">Strike the bell</button>
+              <button id="scaleBtn" type="button">Play a scale</button>
+              <button id="resetBtn" type="button">Vacuum</button>
+            </div>
+            <div class="row">
+              <label class="lab" for="kerrSlider">Kerr nonlinearity K <output id="kerrOut" class="mono">0.50</output></label>
+              <input type="range" id="kerrSlider" min="0" max="1.2" step="0.01" value="0.50" />
+              <div class="hint">Inherited from the coupled transmon. K = 0 is a perfectly linear bell; K &gt; 0 bends the ringing.</div>
+            </div>
+            <div class="row">
+              <label class="lab" for="kappaSlider">Damping κ (ring-down rate) <output id="kappaOut" class="mono">0.30</output></label>
+              <input type="range" id="kappaSlider" min="0.08" max="0.9" step="0.01" value="0.30" />
+              <div class="hint">Photon loss. κ is also the reservoir's memory: strikes fade at this rate, so recent inputs ring louder than old ones.</div>
+            </div>
+            <div class="row btn-row">
+              <button class="toggle" id="soundBtn" type="button" aria-pressed="false">Sound: off</button>
+              <button class="toggle" id="kerrABtn" type="button" aria-pressed="false">Compare: pure coherent (K = 0)</button>
+            </div>
+            <div class="hint">With sound on, each Fock state |n⟩ sounds as one partial of the bell's tone, with loudness P(n) — you literally hear the feature vector.</div>
+          </section>
+
+          <section class="card" aria-label="Fock state probabilities">
+            <h2>What you hear <span class="accent">— the Fock spectrum P(n)</span></h2>
+            <div class="ladder-list" id="ladder"></div>
+            <p class="note">
+              Each bar is one "neuron": the probability of finding n photons. For a pure coherent state
+              this is a Poisson distribution in n; Kerr nonlinearity and dissipation distort it.
+              Listening at several instants (time-multiplexing) multiplies the features.
+            </p>
+          </section>
+        </div>
+      </div>
+
+      <!-- ================= READOUT LAB ================= -->
+      <section class="lab">
+        <h2>The listener: a classical readout that learns</h2>
+        <p class="section-sub">
+          The bell is never trained. The only learned part is a linear map — ridge regression — from the
+          ringing features to a label. Here is the classic test that shows why the reservoir earns its keep:
+          <strong>parity</strong>. Five pulses arrive in sequence (1 = strike, 0 = silence); the label is whether the
+          number of strikes is odd. Parity is mathematically invisible to any linear readout of the raw
+          pulses — such a readout grades at chance level, as the control below confirms. But a linear readout
+          of the <em>ringing</em> can learn it, because the resonator has already mixed the pulses nonlinearly
+          and holds them, fading, in its field.
+        </p>
+        <div class="lab-grid">
+          <div class="card">
+            <h2>Train the readout <span class="accent">— ridge regression, solved on this page</span></h2>
+            <p class="note" style="margin-top:8px;">
+              Training rings 120 random 5-pulse sequences through the simulated resonator, sampling the
+              ringing at seven instants — after every pulse, and twice more as it dies away. Each instant
+              contributes P(0)…P(5), ⟨n⟩, and the quadratures ⟨a⟩ and ⟨a²⟩: 78 features. Ridge regression
+              solves for the weights, and grading happens on 60 fresh sequences the readout never trained
+              on. It uses your current K and κ — change them and retrain.
+            </p>
+            <div class="btn-row" style="margin-top:12px;">
+              <button class="primary" id="trainBtn" type="button">Train the readout</button>
+            </div>
+            <div class="stat-pair">
+              <div><div class="big-stat" id="accReservoir">—</div><div class="k">readout on the ringing · held-out</div></div>
+              <div><div class="big-stat" id="accRaw">—</div><div class="k">readout on raw pulses · held-out</div></div>
+            </div>
+            <div id="trainStatus" class="hint" aria-live="polite">Not trained yet. The weights chart and held-out verdicts appear here.</div>
+            <canvas id="weightsCanvas" width="900" height="300" aria-label="Learned readout weights per feature"></canvas>
+            <div class="legend"><span>weights w — seven listening instants s1…s7 × [P(0)…P(5), ⟨n⟩, Re⟨a⟩, Im⟨a⟩, Re⟨a²⟩, Im⟨a²⟩], plus bias</span></div>
+            <div class="seq-grid" id="seqGrid"></div>
+          </div>
+
+          <div class="card">
+            <h2>Test it <span class="accent">— strike a sequence, hear the verdict</span></h2>
+            <p class="note" style="margin-top:8px;">
+              Choose five pulses. The sequence plays on the bell above; the trained readout listens to the
+              ringing and calls the parity. The quantum dynamics do the mixing — the readout only adds up
+              weighted probabilities and quadratures.
+            </p>
+            <div style="margin-top:14px;">
+              <div class="slot-labels"><span>pulse 1</span><span>pulse 2</span><span>pulse 3</span><span>pulse 4</span><span>pulse 5</span></div>
+              <div class="bit-toggles" style="margin-top:4px;">
+                <button class="bit-btn" type="button" data-bit="0" aria-pressed="false">0</button>
+                <button class="bit-btn on" type="button" data-bit="1" aria-pressed="true">1</button>
+                <button class="bit-btn" type="button" data-bit="2" aria-pressed="false">0</button>
+                <button class="bit-btn on" type="button" data-bit="3" aria-pressed="true">1</button>
+                <button class="bit-btn" type="button" data-bit="4" aria-pressed="false">0</button>
+                <button id="runSeqBtn" type="button" class="primary" style="flex:0 1 auto;">Ring this sequence</button>
+              </div>
+            </div>
+            <div id="testResult" aria-live="polite">Train the readout first, then ring a sequence.</div>
+            <p class="note" style="margin-top:14px;">
+              Why it works: pulse amplitudes add in the field, so |α|² contains cross-terms between pulses;
+              the Poisson probabilities are nonlinear in |α|²; and Kerr shear adds phase structure that
+              depends on the whole history. Parity — invisible to any linear function of the inputs —
+              becomes a linear function of the ringing.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= MAPPING ================= -->
+      <section class="mapping">
+        <h2>The analogy, mapped precisely</h2>
+        <p class="section-sub">Each element of the bell corresponds to a specific piece of the quantum-resonator reservoir.</p>
+        <div class="map-table">
+          <div class="map-row">
+            <div class="map-term">
+              <span class="bell-side">The bell</span>
+              <span class="phys-side">the resonator — cavity / bosonic mode</span>
+            </div>
+            <div class="map-def">
+              <p>A physical oscillator with a ladder of energy levels — the Fock states |0⟩, |1⟩, |2⟩, … Driven, it "rings" according to the quantum dynamics of the driven, dissipative oscillator, including any Kerr nonlinearity inherited from a coupled qubit.</p>
+              <p class="formula">H = −(K/2)·a†a†aa + drive, &nbsp; loss at rate κ</p>
+            </div>
+          </div>
+          <div class="map-row">
+            <div class="map-term">
+              <span class="bell-side">The strike</span>
+              <span class="phys-side">input data — coherent drive amplitude</span>
+            </div>
+            <div class="map-def">
+              <p>Input data is encoded in the amplitude of the drive that strikes — or continuously drives — the bell. A stronger or weaker coherent pulse displaces the cavity field further or less, exactly as different striking strengths produce different ringing amplitudes and overtone content.</p>
+              <p class="formula">u ∈ [0,1] &nbsp;→&nbsp; drive ε(t) ∝ u &nbsp;→&nbsp; displacement α</p>
+            </div>
+          </div>
+          <div class="map-row">
+            <div class="map-term">
+              <span class="bell-side">The ringing you hear</span>
+              <span class="phys-side">measured Fock-state probabilities</span>
+            </div>
+            <div class="map-def">
+              <p>The outputs are the measured occupation probabilities of the Fock states (or other observables such as quadratures) at one or more times after the drive. The distribution over photon numbers is a nonlinear function of the drive amplitude — Poissonian for a pure coherent state, further distorted by Kerr nonlinearity and dissipation — so each Fock probability acts as a different nonlinear "neuron." Time-multiplexing, listening at several instants, gives more features from the same ringing event.</p>
+              <p class="formula">features x = [ P(n, t₁), P(n, t₂), … ] &nbsp;·&nbsp; coherent state: P(n) = e^(−λ) λⁿ / n!</p>
+            </div>
+          </div>
+          <div class="map-row">
+            <div class="map-term">
+              <span class="bell-side">The listener</span>
+              <span class="phys-side">classical output layer — linear map</span>
+            </div>
+            <div class="map-def">
+              <p>A simple linear map — usually ridge regression or ordinary least-squares — takes the vector of measured probabilities and learns the weights that best map it onto the target label or value assigned to each input sequence.</p>
+              <p class="formula">ŷ = w·x + b &nbsp;·&nbsp; the only trained part of the machine</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= MODEL NOTES ================= -->
+      <section class="model">
+        <h2>What is actually being simulated</h2>
+        <div class="card">
+          <p>
+            The wavefunction ψ lives in the Fock basis, truncated at n = 17, and is integrated live
+            (Runge–Kutta) in the frame rotating at the drive frequency: a coherent drive displaces the field,
+            the Kerr term −(K/2)a†a†aa rotates each Fock component at an n-dependent rate, and photon loss
+            damps each component at rate κn/2. For clarity the simulation follows the pure-state
+            (no-jump) evolution, so treat fine details as illustrative rather than lab-grade — the
+            qualitative physics (Poisson ringing, Kerr shear, fading memory, nonlinear features) is the
+            real dynamics.
+          </p>
+          <p>
+            This is precisely the architecture demonstrated with a single transmon coupled to a
+            superconducting coplanar-waveguide resonator, and it is the conceptual core of the
+            coupled-oscillator reservoir proposals: you hit the quantum bell with a strength that encodes
+            your data, you listen to how it rings, and a classical linear layer learns which ringing
+            patterns correspond to which labels.
+          </p>
+        </div>
+      </section>
+
+      <footer>
+        <p>In short: the quantum part never needs to be trained — only the final classical mapping does. That is the whole economy of reservoir computing, and the bell is its oldest intuition: the instrument is fixed; the ear is what learns.</p>
+      </footer>
+    </main>
+
+    <script>
+    "use strict";
+    /* ============================================================
+       Quantum Bell — a driven, dissipative Kerr resonator,
+       simulated live in the Fock basis (rotating frame).
+
+       dψ/dt = -i[ Δ·n - (K/2)·n(n-1) ]ψ + ε(t)(a† - a)ψ - (κ/2)·n·ψ
+       Δ = 0 (drive on resonance). Pure-state (no-jump) evolution.
+       ============================================================ */
+    var NF = 18;                    // Fock states 0..17
+    var SQRT = []; for (var i = 0; i <= NF; i++) SQRT.push(Math.sqrt(i));
+    var TAU = 1.6;                  // pulse duration (sim time units)
+    var EPS_MAX = 2.6;              // drive amplitude at u = 1
+    var H_STEP = 0.01;              // RK4 step
+    var TIME_SCALE = 3.0;           // sim time-units per real second
+
+    var sim = {
+      re: new Float64Array(NF), im: new Float64Array(NF),
+      t: 0, pulses: [],               // pulses: {t0, amp}
+      K: 0.50, kappa: 0.30
+    };
+    sim.re[0] = 1;
+
+    function driveAt(t, pulses) {
+      var e = 0;
+      for (var j = 0; j < pulses.length; j++) {
+        var s = t - pulses[j].t0;
+        if (s > 0 && s < TAU) e += pulses[j].amp * 0.5 * (1 - Math.cos(2 * Math.PI * s / TAU));
+      }
+      return e;
+    }
+
+    /* derivative of (re, im) into (dre, dim), given drive eps */
+    function deriv(re, im, eps, dre, dim) {
+      var K = sim.K, kap = sim.kappa;
+      for (var n = 0; n < NF; n++) {
+        var w = -(K / 2) * n * (n - 1);            // Kerr phase rate (Δ = 0)
+        var r = w * im[n] - (kap / 2) * n * re[n]; // -i·w·ψ and loss (real part)
+        var q = -w * re[n] - (kap / 2) * n * im[n];
+        dre[n] = r; dim[n] = q;
+      }
+      /* drive: ε(a† − a)ψ — couples neighbouring Fock states */
+      for (var m = 0; m < NF; m++) {
+        if (m > 0) { dre[m] += eps * SQRT[m] * re[m - 1]; dim[m] += eps * SQRT[m] * im[m - 1]; }
+        if (m < NF - 1) { dre[m] -= eps * SQRT[m + 1] * re[m + 1]; dim[m] -= eps * SQRT[m + 1] * im[m + 1]; }
+      }
+    }
+
+    var _k1r = new Float64Array(NF), _k1i = new Float64Array(NF),
+        _k2r = new Float64Array(NF), _k2i = new Float64Array(NF),
+        _k3r = new Float64Array(NF), _k3i = new Float64Array(NF),
+        _k4r = new Float64Array(NF), _k4i = new Float64Array(NF),
+        _tr = new Float64Array(NF), _ti = new Float64Array(NF);
+
+    function rk4(state, t, pulses, h) {
+      var re = state.re, im = state.im, n;
+      deriv(re, im, driveAt(t, pulses), _k1r, _k1i);
+      for (n = 0; n < NF; n++) { _tr[n] = re[n] + 0.5 * h * _k1r[n]; _ti[n] = im[n] + 0.5 * h * _k1i[n]; }
+      deriv(_tr, _ti, driveAt(t + h / 2, pulses), _k2r, _k2i);
+      for (n = 0; n < NF; n++) { _tr[n] = re[n] + 0.5 * h * _k2r[n]; _ti[n] = im[n] + 0.5 * h * _k2i[n]; }
+      deriv(_tr, _ti, driveAt(t + h / 2, pulses), _k3r, _k3i);
+      for (n = 0; n < NF; n++) { _tr[n] = re[n] + h * _k3r[n]; _ti[n] = im[n] + h * _k3i[n]; }
+      deriv(_tr, _ti, driveAt(t + h, pulses), _k4r, _k4i);
+      for (n = 0; n < NF; n++) {
+        re[n] += (h / 6) * (_k1r[n] + 2 * _k2r[n] + 2 * _k3r[n] + _k4r[n]);
+        im[n] += (h / 6) * (_k1i[n] + 2 * _k2i[n] + 2 * _k3i[n] + _k4i[n]);
+      }
+    }
+
+    function observables(state) {
+      var P = new Float64Array(NF), meanN = 0, aRe = 0, aIm = 0, norm = 0, n;
+      for (n = 0; n < NF; n++) {
+        P[n] = state.re[n] * state.re[n] + state.im[n] * state.im[n];
+        norm += P[n]; meanN += n * P[n];
+      }
+      for (n = 1; n < NF; n++) {           // ⟨a⟩ = Σ √n · conj(c_{n-1}) · c_n
+        aRe += SQRT[n] * (state.re[n - 1] * state.re[n] + state.im[n - 1] * state.im[n]);
+        aIm += SQRT[n] * (state.re[n - 1] * state.im[n] - state.im[n - 1] * state.re[n]);
+      }
+      return { P: P, meanN: meanN, aRe: aRe, aIm: aIm, norm: norm };
+    }
+
+    function schedulePulse(u, delaySimTime) {
+      sim.pulses.push({ t0: sim.t + (delaySimTime || 0), amp: u * EPS_MAX });
+    }
+    function prunePulses() {
+      sim.pulses = sim.pulses.filter(function (p) { return sim.t - p.t0 < TAU + 0.1; });
+    }
+    function normalizeState(st) {
+      var s = 0, n;
+      for (n = 0; n < NF; n++) s += st.re[n] * st.re[n] + st.im[n] * st.im[n];
+      s = Math.sqrt(s) || 1;
+      for (n = 0; n < NF; n++) { st.re[n] /= s; st.im[n] /= s; }
+    }
+
+    function resetVacuum() {
+      sim.re.fill(0); sim.im.fill(0); sim.re[0] = 1; sim.pulses = [];
+      trace.length = 0;
+    }
+
+    /* ============================================================
+       Rendering — Husimi Q, trace, ladder, bell
+       ============================================================ */
+    var darkMode = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+
+    /* Husimi colour LUT: panel -> copper -> pale gold */
+    var LUT = (function () {
+      var stops = darkMode
+        ? [[24, 20, 14], [122, 62, 16], [224, 154, 74], [255, 226, 175]]
+        : [[239, 233, 219], [198, 132, 62], [168, 95, 29], [110, 58, 10]];
+      var lut = [];
+      for (var s = 0; s < 256; s++) {
+        var x = s / 255 * (stops.length - 1), a = Math.floor(x), f = x - a;
+        var c0 = stops[a], c1 = stops[Math.min(a + 1, stops.length - 1)];
+        lut.push([c0[0] + (c1[0] - c0[0]) * f, c0[1] + (c1[1] - c0[1]) * f, c0[2] + (c1[2] - c0[2]) * f]);
+      }
+      return lut;
+    })();
+
+    var phaseCanvas = document.getElementById("phaseCanvas");
+    var pctx = phaseCanvas.getContext("2d");
+    var GRID = 54, RANGE = 3.5;
+    var off = document.createElement("canvas"); off.width = GRID; off.height = GRID;
+    var offCtx = off.getContext("2d");
+    var imgData = offCtx.createImageData(GRID, GRID);
+
+    function drawPhase(state) {
+      var re = state.re, im = state.im;
+      var data = imgData.data;
+      var vals = new Float32Array(GRID * GRID);
+      var maxQ = 1e-9, gx, gy, n;
+      for (gy = 0; gy < GRID; gy++) {
+        var by = RANGE - (gy / (GRID - 1)) * 2 * RANGE;      // Im β
+        for (gx = 0; gx < GRID; gx++) {
+          var bx = -RANGE + (gx / (GRID - 1)) * 2 * RANGE;   // Re β
+          var env = Math.exp(-(bx * bx + by * by) / 2);
+          /* ⟨β|ψ⟩ = env · Σ c_n (β*)^n / √n!  — note β* = bx − i·by */
+          var sr = 0, si = 0, tr = env, ti = 0;
+          for (n = 0; n < NF; n++) {
+            sr += re[n] * tr - im[n] * ti;
+            si += re[n] * ti + im[n] * tr;
+            var nr = (tr * bx + ti * by) / SQRT[n + 1];      // multiply by β*/√(n+1)
+            var ni = (ti * bx - tr * by) / SQRT[n + 1];
+            tr = nr; ti = ni;
+          }
+          var q = sr * sr + si * si;
+          vals[gy * GRID + gx] = q;
+          if (q > maxQ) maxQ = q;
+        }
+      }
+      for (var p = 0; p < GRID * GRID; p++) {
+        var t = Math.pow(vals[p] / maxQ, 0.62);
+        var c = LUT[Math.min(255, Math.floor(t * 255))];
+        data[p * 4] = c[0]; data[p * 4 + 1] = c[1]; data[p * 4 + 2] = c[2]; data[p * 4 + 3] = 255;
+      }
+      offCtx.putImageData(imgData, 0, 0);
+      pctx.imageSmoothingEnabled = true;
+      pctx.clearRect(0, 0, phaseCanvas.width, phaseCanvas.height);
+      pctx.drawImage(off, 0, 0, phaseCanvas.width, phaseCanvas.height);
+      /* axes + origin marker */
+      var W = phaseCanvas.width, mid = W / 2;
+      pctx.strokeStyle = darkMode ? "rgba(236,228,210,.28)" : "rgba(33,28,20,.25)";
+      pctx.lineWidth = 1;
+      pctx.beginPath(); pctx.moveTo(mid, 0); pctx.lineTo(mid, W); pctx.moveTo(0, mid); pctx.lineTo(W, mid); pctx.stroke();
+      pctx.fillStyle = darkMode ? "rgba(236,228,210,.75)" : "rgba(33,28,20,.7)";
+      pctx.beginPath(); pctx.arc(mid, mid, 3, 0, 2 * Math.PI); pctx.fill();
+      pctx.font = "20px 'IBM Plex Mono', monospace";
+      pctx.fillText("|0⟩", mid + 8, mid - 8);
+    }
+
+    /* trace */
+    var trace = [];
+    var traceCanvas = document.getElementById("traceCanvas");
+    var tctx = traceCanvas.getContext("2d");
+    function drawTrace() {
+      var W = traceCanvas.width, Hh = traceCanvas.height;
+      tctx.clearRect(0, 0, W, Hh);
+      var css = getComputedStyle(document.documentElement);
+      var copper = css.getPropertyValue("--copper").trim() || "#a85f1d";
+      var steel = css.getPropertyValue("--steel").trim() || "#4d6472";
+      var line = css.getPropertyValue("--line").trim() || "#ccc";
+      tctx.strokeStyle = line; tctx.lineWidth = 1;
+      tctx.beginPath(); tctx.moveTo(0, Hh - 18); tctx.lineTo(W, Hh - 18); tctx.stroke();
+      if (trace.length < 2) return;
+      var winT = 16, tEnd = trace[trace.length - 1].t, tStart = tEnd - winT;
+      function X(t) { return (t - tStart) / winT * W; }
+      /* drive (dashed, scaled) */
+      tctx.strokeStyle = steel; tctx.lineWidth = 2; tctx.setLineDash([6, 5]);
+      tctx.beginPath();
+      trace.forEach(function (s, idx) {
+        var y = Hh - 18 - (s.eps / EPS_MAX) * (Hh - 44);
+        if (idx === 0) tctx.moveTo(X(s.t), y); else tctx.lineTo(X(s.t), y);
+      });
+      tctx.stroke(); tctx.setLineDash([]);
+      /* ⟨n⟩ */
+      tctx.strokeStyle = copper; tctx.lineWidth = 2.6;
+      tctx.beginPath();
+      trace.forEach(function (s, idx) {
+        var y = Hh - 18 - Math.min(s.meanN / 7, 1) * (Hh - 34);
+        if (idx === 0) tctx.moveTo(X(s.t), y); else tctx.lineTo(X(s.t), y);
+      });
+      tctx.stroke();
+      tctx.fillStyle = steel; tctx.font = "19px 'IBM Plex Mono', monospace";
+      tctx.fillText("⟨n⟩ scale 0–7", 8, 22);
+    }
+
+    /* Fock ladder DOM */
+    var ladderEl = document.getElementById("ladder");
+    var frows = [];
+    (function buildLadder() {
+      for (var n = 0; n <= 12; n++) {
+        var row = document.createElement("div"); row.className = "frow";
+        row.innerHTML = '<span class="flab">|' + n + '⟩</span><div class="ftrack"><div class="fbar"></div></div><span class="fval mono">0.000</span>';
+        ladderEl.appendChild(row);
+        frows.push({ row: row, bar: row.querySelector(".fbar"), val: row.querySelector(".fval") });
+      }
+    })();
+
+    var bellSwing = document.getElementById("bellSwing");
+    var bellBody = document.getElementById("bellBody");
+    var bellStage = document.getElementById("bellStage");
+    var roMeanN = document.getElementById("roMeanN"), roPeak = document.getElementById("roPeak"), roAlpha = document.getElementById("roAlpha");
+
+    function spawnRipple() {
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      var r = document.createElement("div"); r.className = "ripple";
+      bellStage.appendChild(r);
+      requestAnimationFrame(function () { r.classList.add("go"); });
+      setTimeout(function () { r.remove(); }, 1700);
+    }
+
+    /* ============================================================
+       Audio — Fock states as bell partials (sonification)
+       ============================================================ */
+    var audio = { ctx: null, oscs: [], gains: [], master: null, on: false };
+    var PARTIALS = [1, 2.0, 2.74, 3.76, 4.07, 5.43, 6.79, 8.21];
+    function initAudio() {
+      if (audio.ctx) return;
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      audio.ctx = new AC();
+      audio.master = audio.ctx.createGain(); audio.master.gain.value = 0;
+      var lp = audio.ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 3200;
+      audio.master.connect(lp); lp.connect(audio.ctx.destination);
+      for (var n = 0; n < PARTIALS.length; n++) {
+        var o = audio.ctx.createOscillator(); o.type = "sine";
+        o.frequency.value = 174 * PARTIALS[n];
+        var g = audio.ctx.createGain(); g.gain.value = 0;
+        o.connect(g); g.connect(audio.master); o.start();
+        audio.oscs.push(o); audio.gains.push(g);
+      }
+    }
+    function updateAudio(P) {
+      if (!audio.ctx) return;
+      var t = audio.ctx.currentTime;
+      for (var n = 0; n < PARTIALS.length; n++) {
+        audio.gains[n].gain.setTargetAtTime(audio.on ? P[n] * 0.34 : 0, t, 0.06);
+      }
+      audio.master.gain.setTargetAtTime(audio.on ? 0.5 : 0, t, 0.08);
+    }
+
+    /* ============================================================
+       Main loop
+       ============================================================ */
+    var lastNow = null, frame = 0;
+    function loop(now) {
+      requestAnimationFrame(loop);
+      if (lastNow === null) lastNow = now;
+      var dtReal = Math.min((now - lastNow) / 1000, 0.06); lastNow = now;
+      var target = sim.t + dtReal * TIME_SCALE;
+      while (sim.t < target) { rk4(sim, sim.t, sim.pulses, H_STEP); sim.t += H_STEP; }
+      normalizeState(sim);
+      prunePulses();
+      var obs = observables(sim);
+      trace.push({ t: sim.t, meanN: obs.meanN, eps: driveAt(sim.t, sim.pulses) });
+      while (trace.length && trace[0].t < sim.t - 17) trace.shift();
+
+      frame++;
+      if (frame % 2 === 0) drawPhase(sim);
+      drawTrace();
+
+      /* ladder + readouts (throttled) */
+      if (frame % 3 === 0) {
+        var peak = 0;
+        for (var n = 0; n <= 12; n++) {
+          frows[n].bar.style.width = (obs.P[n] * 100).toFixed(1) + "%";
+          frows[n].val.textContent = obs.P[n].toFixed(3);
+          if (obs.P[n] > obs.P[peak]) peak = n;
+        }
+        frows.forEach(function (f, idx) { f.row.classList.toggle("peak", idx === peak && obs.meanN > 0.02); });
+        roMeanN.textContent = obs.meanN.toFixed(2);
+        roPeak.textContent = "|" + peak + "⟩";
+        roAlpha.textContent = Math.sqrt(obs.aRe * obs.aRe + obs.aIm * obs.aIm).toFixed(2);
+      }
+
+      /* bell swing follows the field quadrature; glow follows ⟨n⟩ */
+      var ang = Math.max(-16, Math.min(16, obs.aRe * 5.2));
+      bellSwing.style.transform = "rotate(" + ang.toFixed(2) + "deg)";
+      var glow = Math.min(obs.meanN / 5, 1);
+      bellBody.style.filter = glow > 0.02 ? "drop-shadow(0 0 " + (4 + glow * 16).toFixed(0) + "px rgba(224,154,74," + (0.25 + glow * 0.5).toFixed(2) + "))" : "";
+
+      updateAudio(obs.P);
+    }
+    requestAnimationFrame(loop);
+
+    /* ============================================================
+       Controls
+       ============================================================ */
+    var uSlider = document.getElementById("uSlider"), uOut = document.getElementById("uOut");
+    var kerrSlider = document.getElementById("kerrSlider"), kerrOut = document.getElementById("kerrOut");
+    var kappaSlider = document.getElementById("kappaSlider"), kappaOut = document.getElementById("kappaOut");
+    var savedK = null;
+
+    uSlider.addEventListener("input", function () { uOut.textContent = Number(uSlider.value).toFixed(2); });
+    kerrSlider.addEventListener("input", function () {
+      sim.K = Number(kerrSlider.value); kerrOut.textContent = sim.K.toFixed(2);
+      markStale();
+    });
+    kappaSlider.addEventListener("input", function () {
+      sim.kappa = Number(kappaSlider.value); kappaOut.textContent = sim.kappa.toFixed(2);
+      markStale();
+    });
+
+    document.getElementById("strikeBtn").addEventListener("click", function () {
+      schedulePulse(Number(uSlider.value), 0); spawnRipple();
+      if (audio.on && audio.ctx && audio.ctx.state === "suspended") audio.ctx.resume();
+    });
+    document.getElementById("scaleBtn").addEventListener("click", function () {
+      [0.25, 0.55, 0.9].forEach(function (u, idx) {
+        schedulePulse(u, idx * 2.6);
+        setTimeout(spawnRipple, idx * 870);
+      });
+    });
+    document.getElementById("resetBtn").addEventListener("click", resetVacuum);
+
+    var soundBtn = document.getElementById("soundBtn");
+    soundBtn.addEventListener("click", function () {
+      audio.on = !audio.on;
+      if (audio.on) { initAudio(); if (audio.ctx && audio.ctx.state === "suspended") audio.ctx.resume(); }
+      soundBtn.setAttribute("aria-pressed", String(audio.on));
+      soundBtn.textContent = audio.on ? "Sound: on — you hear P(n)" : "Sound: off";
+    });
+
+    var kerrABtn = document.getElementById("kerrABtn");
+    kerrABtn.addEventListener("click", function () {
+      if (savedK === null) {
+        savedK = sim.K; sim.K = 0;
+        kerrABtn.setAttribute("aria-pressed", "true");
+        kerrABtn.textContent = "Back to Kerr K = " + savedK.toFixed(2);
+        kerrSlider.disabled = true;
+      } else {
+        sim.K = savedK; savedK = null;
+        kerrABtn.setAttribute("aria-pressed", "false");
+        kerrABtn.textContent = "Compare: pure coherent (K = 0)";
+        kerrSlider.disabled = false;
+      }
+      kerrOut.textContent = sim.K.toFixed(2);
+      markStale();
+    });
+
+    /* greet the visitor with one strike so the page is alive */
+    setTimeout(function () { schedulePulse(0.65, 0); spawnRipple(); }, 700);
+
+    /* ============================================================
+       Readout lab — ridge regression on ringing features.
+       Task: parity of a 5-pulse sequence (the label no linear
+       readout of the raw pulses can represent). Train on 120
+       random sequences, grade on 60 held-out ones — fixed seed,
+       so the numbers are reproducible. Features at each of 7
+       listening instants (after every pulse, plus two more as
+       the ringing dies away): P(0..5), <n>/4, Re<a>/2, Im<a>/2,
+       Re<a^2>/4, Im<a^2>/4  ->  78 numbers including bias.
+       ============================================================ */
+    var LAB_SLOT = 2.6, LAB_AMP = 0.85, LAB_NP = 6;
+    var PER_T = LAB_NP + 5;
+    var NFEAT = 7 * PER_T + 1;
+
+    function labObs(st) {
+      var o = observables(st), inv = 1 / (o.norm || 1), a2r = 0, a2i = 0;
+      for (var n = 2; n < NF; n++) {
+        var c = Math.sqrt(n * (n - 1));
+        a2r += c * (st.re[n - 2] * st.re[n] + st.im[n - 2] * st.im[n]);
+        a2i += c * (st.re[n - 2] * st.im[n] - st.im[n - 2] * st.re[n]);
+      }
+      var P = new Float64Array(NF);
+      for (var m = 0; m < NF; m++) P[m] = o.P[m] * inv;
+      return { P: P, meanN: o.meanN * inv, aRe: o.aRe * inv, aIm: o.aIm * inv, a2r: a2r * inv, a2i: a2i * inv };
+    }
+
+    function runSequenceFeatures(bits) {
+      var st = { re: new Float64Array(NF), im: new Float64Array(NF) };
+      st.re[0] = 1;
+      var pulses = [];
+      bits.forEach(function (b, idx) { if (b) pulses.push({ t0: idx * LAB_SLOT, amp: LAB_AMP * EPS_MAX }); });
+      var lastEnd = (bits.length - 1) * LAB_SLOT + TAU;
+      var sampleAt = bits.map(function (b, idx) { return idx * LAB_SLOT + TAU + 0.3; });
+      sampleAt.push(lastEnd + 1.5); sampleAt.push(lastEnd + 2.7);
+      var feats = [], si = 0, t = 0, step = 0, finalT = sampleAt[sampleAt.length - 1];
+      while (t < finalT - 1e-9) {
+        rk4(st, t, pulses, H_STEP); t += H_STEP; step++;
+        if (step % 5 === 0) normalizeState(st);
+        while (si < sampleAt.length && t >= sampleAt[si] - 1e-9) {
+          var o = labObs(st);
+          for (var n = 0; n < LAB_NP; n++) feats.push(o.P[n]);
+          feats.push(o.meanN / 4); feats.push(o.aRe / 2); feats.push(o.aIm / 2);
+          feats.push(o.a2r / 4); feats.push(o.a2i / 4);
+          si++;
+        }
+      }
+      feats.push(1);                            // bias
+      return feats;
+    }
+
+    function ridgeSolve(X, y, lambda) {
+      var d = X[0].length;
+      var A = [], b = new Float64Array(d), r, c, k;
+      for (r = 0; r < d; r++) { A.push(new Float64Array(d)); }
+      X.forEach(function (row, i) {
+        for (r = 0; r < d; r++) {
+          b[r] += row[r] * y[i];
+          for (c = 0; c < d; c++) A[r][c] += row[r] * row[c];
+        }
+      });
+      for (r = 0; r < d; r++) A[r][r] += lambda * (r === d - 1 ? 0.01 : 1);  // barely regularise bias
+      /* Gaussian elimination with partial pivoting */
+      var M = A.map(function (row, i) { var m = Array.from(row); m.push(b[i]); return m; });
+      for (c = 0, r = 0; c < d && r < d; c++, r++) {
+        var piv = r;
+        for (k = r + 1; k < d; k++) if (Math.abs(M[k][c]) > Math.abs(M[piv][c])) piv = k;
+        var tmp = M[r]; M[r] = M[piv]; M[piv] = tmp;
+        var pv = M[r][c] || 1e-12;
+        for (k = r + 1; k < d; k++) {
+          var f = M[k][c] / pv;
+          for (var j = c; j <= d; j++) M[k][j] -= f * M[r][j];
+        }
+      }
+      var w = new Float64Array(d);
+      for (r = d - 1; r >= 0; r--) {
+        var s = M[r][d];
+        for (c = r + 1; c < d; c++) s -= M[r][c] * w[c];
+        w[r] = s / (M[r][r] || 1e-12);
+      }
+      return w;
+    }
+
+    function dot(w, x) { var s = 0; for (var i = 0; i < w.length; i++) s += w[i] * x[i]; return s; }
+    function parity(bits) { var s = 0; bits.forEach(function (b) { s += b; }); return s % 2; }
+
+    var rngState = 20261105;
+    function rnd() { rngState = (rngState * 1103515245 + 12345) % 2147483648; return rngState / 2147483648; }
+    function genSeqs(n, L) {
+      var out = [];
+      for (var i = 0; i < n; i++) { var b = []; for (var j = 0; j < L; j++) b.push(rnd() < 0.5 ? 1 : 0); out.push(b); }
+      return out;
+    }
+
+    var trained = null;   // {w, wRaw, K, kappa}
+
+    function markStale() {
+      if (!trained) return;
+      if (Math.abs(trained.K - sim.K) > 1e-9 || Math.abs(trained.kappa - sim.kappa) > 1e-9) {
+        document.getElementById("trainStatus").textContent =
+          "K or \u03ba changed since training \u2014 the readout was fitted to a different bell. Retrain to match.";
+      }
+    }
+
+    var weightsCanvas = document.getElementById("weightsCanvas");
+    function drawWeights(w) {
+      var ctx = weightsCanvas.getContext("2d");
+      var W = weightsCanvas.width, Hh = weightsCanvas.height;
+      ctx.clearRect(0, 0, W, Hh);
+      var css = getComputedStyle(document.documentElement);
+      var copper = css.getPropertyValue("--copper").trim() || "#a85f1d";
+      var steel = css.getPropertyValue("--steel").trim() || "#4d6472";
+      var soft = css.getPropertyValue("--ink-soft").trim() || "#888";
+      var line = css.getPropertyValue("--line").trim() || "#ccc";
+      var midY = Hh / 2, maxAbs = 0.001, i;
+      for (i = 0; i < w.length - 1; i++) maxAbs = Math.max(maxAbs, Math.abs(w[i]));
+      ctx.strokeStyle = line; ctx.beginPath(); ctx.moveTo(0, midY); ctx.lineTo(W, midY); ctx.stroke();
+      var bw = W / (w.length - 1);
+      for (i = 0; i < w.length - 1; i++) {
+        var h = (w[i] / maxAbs) * (midY - 16);
+        ctx.fillStyle = w[i] >= 0 ? copper : steel;
+        if (h >= 0) ctx.fillRect(i * bw + 1.5, midY - h, bw - 3, h);
+        else ctx.fillRect(i * bw + 1.5, midY, bw - 3, -h);
+        if (i % PER_T === 0) {
+          ctx.fillStyle = soft; ctx.font = "17px 'IBM Plex Mono', monospace";
+          ctx.fillText("s" + (i / PER_T + 1), i * bw + 2, Hh - 6);
+        }
+      }
+      ctx.fillStyle = soft; ctx.font = "17px 'IBM Plex Mono', monospace";
+      ctx.fillText("bias " + w[w.length - 1].toFixed(2), W - 110, 22);
+    }
+
+    document.getElementById("trainBtn").addEventListener("click", function () {
+      var status = document.getElementById("trainStatus");
+      status.textContent = "Training \u2014 ringing 180 sequences through the simulated bell\u2026";
+      setTimeout(function () {
+        rngState = 20261105;
+        var trainSeqs = genSeqs(120, 5), testSeqs = genSeqs(60, 5);
+        var X = trainSeqs.map(runSequenceFeatures);
+        var y = trainSeqs.map(function (b) { return parity(b) ? 1 : -1; });
+        var w = ridgeSolve(X, y, 1.0);
+        var Xraw = trainSeqs.map(function (b) { return b.concat([1]); });
+        var wRaw = ridgeSolve(Xraw, y, 1.0);
+        trained = { w: w, wRaw: wRaw, K: sim.K, kappa: sim.kappa };
+
+        var Xte = testSeqs.map(runSequenceFeatures);
+        var okRes = 0, okRaw = 0;
+        var grid = document.getElementById("seqGrid");
+        grid.innerHTML = "";
+        testSeqs.forEach(function (bits, i) {
+          var truth = parity(bits);
+          var pred = dot(w, Xte[i]) >= 0 ? 1 : 0;
+          var rawPred = dot(wRaw, bits.concat([1])) >= 0 ? 1 : 0;
+          if (pred === truth) okRes++;
+          if (rawPred === truth) okRaw++;
+          if (i < 12) {
+            var chip = document.createElement("div");
+            chip.className = "seq-chip " + (pred === truth ? "ok" : "miss");
+            chip.innerHTML = '<span class="bits">' + bits.join("") + '</span><br>parity ' + truth +
+              ' \u2192 readout ' + pred + ' <span class="' + (pred === truth ? "verdict-ok" : "verdict-miss") + '">' +
+              (pred === truth ? "\u2713" : "\u2717") + '</span><br><span style="opacity:.65">raw: ' + rawPred + '</span>';
+            grid.appendChild(chip);
+          }
+        });
+        document.getElementById("accReservoir").textContent = Math.round(okRes / 60 * 100) + "%";
+        document.getElementById("accRaw").textContent = Math.round(okRaw / 60 * 100) + "%";
+        status.textContent =
+          "Trained at K = " + sim.K.toFixed(2) + ", \u03ba = " + sim.kappa.toFixed(2) +
+          ". Ringing readout: " + okRes + "/60 held-out sequences right; raw-pulse readout: " + okRaw +
+          "/60 \u2014 chance level, exactly as theory says. First 12 held-out sequences:";
+        drawWeights(w);
+      }, 30);
+    });
+
+    /* sequence tester */
+    var testBits = [0, 1, 0, 1, 0];
+    var bitBtns = Array.prototype.slice.call(document.querySelectorAll(".bit-btn"));
+    bitBtns.forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var idx = Number(btn.getAttribute("data-bit"));
+        testBits[idx] = testBits[idx] ? 0 : 1;
+        btn.textContent = String(testBits[idx]);
+        btn.classList.toggle("on", !!testBits[idx]);
+        btn.setAttribute("aria-pressed", String(!!testBits[idx]));
+      });
+    });
+
+    document.getElementById("runSeqBtn").addEventListener("click", function () {
+      var resEl = document.getElementById("testResult");
+      /* play it on the stage bell */
+      resetVacuum();
+      testBits.forEach(function (b, idx) { if (b) schedulePulse(LAB_AMP, idx * LAB_SLOT); });
+      setTimeout(spawnRipple, 60);
+      if (!trained) {
+        resEl.innerHTML = "Ringing <span class=\"pred\">" + testBits.join(" ") + "</span> \u2014 but the readout is untrained, so nobody is listening yet. Train it above.";
+        return;
+      }
+      var feats = runSequenceFeatures(testBits);
+      var score = dot(trained.w, feats);
+      var pred = score >= 0 ? 1 : 0;
+      var truth = parity(testBits);
+      var stale = Math.abs(trained.K - sim.K) > 1e-9 || Math.abs(trained.kappa - sim.kappa) > 1e-9;
+      resEl.innerHTML = "Sequence <span class=\"pred\">" + testBits.join(" ") + "</span> \u2192 readout score " +
+        "<span class=\"pred\">" + score.toFixed(2) + "</span> \u2192 parity <span class=\"pred\">" + pred + "</span> \u2014 " +
+        (pred === truth
+          ? '<span style="color:var(--good);font-weight:600">correct</span> (true parity ' + truth + ').'
+          : '<span style="color:var(--bad);font-weight:600">missed</span> (true parity ' + truth + ').') +
+        (stale ? " Note: trained at different K/\u03ba \u2014 retrain for a fair test." : "");
+    });
+    </script>
+  </body>
+</html>
